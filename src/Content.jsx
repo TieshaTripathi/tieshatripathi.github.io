@@ -1,3 +1,4 @@
+import AboutGallery from "./AboutGallery";
 import Heading from "./Heading";
 import { Hero, Projects, Leadership, Experience } from "./components";
 import { experienceRoles } from "./data";
@@ -58,22 +59,7 @@ export default function Content({ paused, toggleMotion }) {
               <span className="tag">People & teams</span>
             </div>
           </div>
-          <div className="about-photo" aria-label="A moment at TEDxSIESGST">
-            <span>A LITTLE MORE ME</span>
-            <figure className="about-moment">
-              <img
-                src="/about-moment-1280.webp"
-                srcSet="/about-moment-640.webp 640w, /about-moment-1280.webp 1280w"
-                sizes="(max-width:700px) 90vw, 40vw"
-                width="1280"
-                height="1600"
-                decoding="async"
-                loading="lazy"
-                alt="Tiesha at TEDxSIESGST"
-              />
-              <figcaption>A moment worth sharing.</figcaption>
-            </figure>
-          </div>
+          <AboutGallery paused={paused} />
         </section>
         <section id="projects" className="reveal">
           <svg

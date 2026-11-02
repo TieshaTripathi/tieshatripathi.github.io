@@ -38,8 +38,9 @@ export const leadershipData = [
     organization: "Student Council · SIES GST",
     description:
       "I help coordinate student council activities, college events, and the committees involved. My responsibilities have included event planning, budgeting, and working with external partners.",
-    image: "/leadership-portrait.jpg",
-    alt: "Tiesha Tripathi",
+    image: "/general-secretary-event.jpg",
+    alt: "Live music performance on a blue-lit college event stage",
+    imagePosition: "center bottom",
   },
   {
     title: "Co-Organizer",
@@ -54,8 +55,10 @@ export const leadershipData = [
     organization: "Google Developers Group · SIES GST",
     description:
       "I helped plan CyberStorm, coordinate technical logistics, and connect teams with mentors. I also supported community outreach and campus developer sessions.",
-    image: null,
-    alt: "",
+    image: "/gdg-community.jpg",
+    alt: "Group photograph at a GDG community event",
+    imagePosition: "center bottom",
+    fullWidth: true,
   },
 ];
 export const experienceRoles = [

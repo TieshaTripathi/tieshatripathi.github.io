@@ -21,7 +21,20 @@ assert.equal(
   3,
   "Preserve the original archived third project data",
 );
+for (const title of [
+  "General Secretary",
+  "Co-Organizer",
+  "Management & Outreach Coordinator",
+])
+  assert(leadershipData.some((role) => role.title === title));
 assert.equal(leadershipData.length, 3);
+assert(
+  leadershipData.some(
+    (role) =>
+      role.title === "Management & Outreach Coordinator" &&
+      role.image === "/gdg-community.jpg",
+  ),
+);
 assert.equal(experienceRoles.length, 2);
 const code = readFileSync(
   new URL("../src/Content.jsx", import.meta.url),

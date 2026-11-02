@@ -33,7 +33,10 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
     await button.click();
   }
   const normalize = (text) => text.replace(/\s+/g, "");
-  for (const fragment of baseline.fragments)
+  // The GDG placeholder is deliberately replaced by the user's group photograph.
+  for (const fragment of baseline.fragments.filter(
+    (text) => text !== "A space for a community moment.",
+  ))
     expect(normalize(preservedText)).toContain(normalize(fragment));
   for (const id of [
     "about",
@@ -336,4 +339,87 @@ test("hero interaction, clear portrait and About alignment", async ({
   await page.locator("#about").screenshot({
     path: `test-results/${testInfo.project.name}-about-revised.png`,
   });
+});
+
+test("new About gallery and leadership photographs", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Motion on Ⅱ" }).click();
+  const gallery = page.locator(".about-gallery");
+  await gallery.scrollIntoViewIfNeeded();
+  await gallery
+    .getByRole("button", { name: "Campus portrait", exact: true })
+    .click();
+  await expect(
+    gallery.getByRole("img", {
+      name: "Tiesha in a purple shirt outdoors on campus",
+    }),
+  ).toBeVisible();
+  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
+  await gallery.getByRole("button", { name: "Next About photo" }).click();
+  await expect(
+    gallery.getByRole("img", {
+      name: "Tiesha in a white shirt on a tree-lined campus",
+    }),
+  ).toBeVisible();
+  await expect(gallery.locator(".gallery-counter")).toHaveText("02 / 03");
+  await gallery
+    .getByRole("button", { name: "Campus moment", exact: true })
+    .press("ArrowLeft");
+  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
+  await expect
+    .poll(() =>
+      gallery
+        .locator(".gallery-slide img")
+        .evaluateAll((imgs) =>
+          imgs.every((img) => img.complete && img.naturalWidth > 0),
+        ),
+    )
+    .toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.locator("#about").screenshot({
+    path: `test-results/${testInfo.project.name}-about-gallery.png`,
+  });
+  const secretary = page.getByRole("button", { name: /General Secretary/ });
+  await secretary.click();
+  await expect(secretary.locator(".role-photo img")).toHaveAttribute(
+    "src",
+    "/general-secretary-event-1280.webp",
+  );
+  const gdg = page.getByRole("button", {
+    name: /Management & Outreach Coordinator/,
+  });
+  await gdg.click();
+  await expect(gdg.locator(".role-photo img")).toHaveAttribute(
+    "src",
+    "/gdg-community-1280.webp",
+  );
+  await expect
+    .poll(() =>
+      gdg
+        .locator("img")
+        .evaluate((img) => img.complete && img.naturalWidth > 0),
+    )
+    .toBe(true);
+  await page
+    .locator("#leadership")
+    .screenshot({ path: `test-results/${testInfo.project.name}-gdg.png` });
+  await gdg.locator(".role-photo").click();
+  await expect(gdg).toHaveAttribute("aria-expanded", "false");
+  await page.getByRole("button", { name: "Motion off ▷" }).click();
+  await gallery
+    .getByRole("button", { name: "Campus moment", exact: true })
+    .click();
+  await expect(
+    gallery.getByRole("img", {
+      name: "Tiesha in a white shirt on a tree-lined campus",
+    }),
+  ).toBeVisible();
+  await page.waitForTimeout(700);
+  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
 });

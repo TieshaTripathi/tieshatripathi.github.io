@@ -511,7 +511,7 @@ export function Leadership({ paused }) {
                 <span className="role-index">0{i + 1}</span>
                 <span>
                   <strong>{role.title}</strong>
-                  <small>{role.organization}</small>
+                  {role.organization && <small>{role.organization}</small>}
                 </span>
                 <motion.span
                   className="role-plus"
@@ -532,7 +532,11 @@ export function Leadership({ paused }) {
                     transition={{ duration: paused ? 0 : 0.55 }}
                     onAnimationComplete={() => ScrollTrigger.refresh()}
                   >
-                    <span className="role-body">
+                    <span
+                      className={
+                        "role-body " + (role.fullWidth ? "role-body-wide" : "")
+                      }
+                    >
                       <span className="role-photo">
                         {role.image ? (
                           <motion.img
@@ -544,6 +548,10 @@ export function Leadership({ paused }) {
                             sizes="(max-width:700px) 80vw, 40vw"
                             decoding="async"
                             alt={role.alt}
+                            style={{
+                              objectPosition:
+                                role.imagePosition || "center 35%",
+                            }}
                             loading="lazy"
                             initial={paused ? false : { scale: 1.12 }}
                             animate={{ scale: 1 }}
@@ -556,9 +564,11 @@ export function Leadership({ paused }) {
                           </span>
                         )}
                       </span>
-                      <span className="role-description">
-                        {role.description}
-                      </span>
+                      {role.description && (
+                        <span className="role-description">
+                          {role.description}
+                        </span>
+                      )}
                     </span>
                   </motion.span>
                 )}

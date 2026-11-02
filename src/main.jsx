@@ -12,6 +12,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Content from "./Content";
 import "./style.css";
 import "./hero-about.css";
+import "./gallery.css";
 
 gsap.registerPlugin(ScrollTrigger);
 

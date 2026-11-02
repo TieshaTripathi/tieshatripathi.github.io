@@ -4,6 +4,8 @@ Verified on 2 November 2026 against the Vite production build. Source of truth: 
 
 The latest revision replaces the hero with the user-supplied professional portrait, removes its background, adds persistent and pointer-driven hero interactions, moves labels below the face, and aligns the About text and photograph. The remaining sections retain their existing implementation.
 
+The photo update assigns the supplied group photograph to the existing GDG card and the stage photograph to General Secretary. About now has an animated three-photo gallery: the two supplied campus photos plus the retained TEDx photograph. Controls support thumbnails, previous/next navigation, arrow keys, and reduced motion. The GDG photo replaces its former empty-photo placeholder.
+
 ## Results
 
 | Check | Result |
@@ -11,14 +13,14 @@ The latest revision replaces the hero with the user-supplied professional portra
 | Production build | Pass |
 | ESLint, including React Hooks rules | Pass, no warnings |
 | Original content / original asset SHA-256 checks | Pass |
-| Chromium 1440 × 900 | 4 tests passed |
-| Chromium 768 × 1024 | 4 tests passed |
-| Chromium 390 × 844 | 4 tests passed |
-| Chromium 320 × 740 | 4 tests passed |
+| Chromium 1440 × 900 | 5 tests passed |
+| Chromium 768 × 1024 | 5 tests passed |
+| Chromium 390 × 844 | 5 tests passed |
+| Chromium 320 × 740 | 5 tests passed |
 | axe WCAG 2 A/AA and 2.1 AA scans, page and project dialog, all sizes | No violations detected |
 | Production dependency audit | No vulnerabilities reported |
 
-The 16 browser tests cover continuous hero motion after entrance, pointer response, keyboard/click interest selection, protected-face clearance, photo-picker clearance, About column alignment, original visible text fragments, role copy, original links, asset loading, horizontal overflow and image containment, project details and demo-video wiring, repository link, Escape handling, modal focus and restoration, whole-card leadership interaction by photo/text/keyboard, mobile navigation, native form validation, reduced motion, scroll animation, and resizing. The FormSubmit form was not submitted; tests do not send email. Browser tests run against the production server, not the Vite development server.
+The 20 browser tests cover the new photo assignments, gallery controls, animated and reduced-motion gallery navigation, original image loading, continuous hero motion after entrance, pointer response, keyboard/click interest selection, protected-face clearance, photo-picker clearance, About column alignment, original visible text fragments, role copy, original links, asset loading, horizontal overflow and image containment, project details and demo-video wiring, repository link, Escape handling, modal focus and restoration, whole-card leadership interaction by photo/text/keyboard, mobile navigation, native form validation, reduced motion, scroll animation, and resizing. The FormSubmit form was not submitted; tests do not send email. Browser tests run against the production server, not the Vite development server.
 
 Visual review included desktop/mobile hero composition, numbered section flow, About photo alignment, mobile experience cards, and the expanded TEDx card. The original event JPEG is sideways; display derivatives rotate it correctly without altering the original file. Original files remain available at their original public URLs.
 
@@ -53,3 +55,11 @@ The transparent replacement portrait and the exact built-in image-edit prompt ar
 ## Publication
 
 No merge or deployment was performed. The feature branch has a PR validation workflow and a main-only Pages deployment job. Before an approved merge, set the repository's Pages source to **GitHub Actions** as described in the README. The existing production settings have not been changed.
+
+### Added photo review
+
+![About gallery](qa/desktop-about-gallery.png)
+
+![GDG photograph](qa/desktop-gdg.png)
+
+![General Secretary photograph](qa/mobile-general-secretary.png)
