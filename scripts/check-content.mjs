@@ -1,0 +1,40 @@
+import { readFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import assert from "node:assert/strict";
+import { projectData, leadershipData, experienceRoles } from "../src/data.js";
+const baseline = JSON.parse(
+  readFileSync(new URL("./content-baseline.json", import.meta.url), "utf8"),
+);
+for (const name of baseline.assets) {
+  const file = new URL("../public/" + name, import.meta.url);
+  assert(existsSync(file), `Missing original asset ${name}`);
+  const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
+  assert.equal(
+    hash(readFileSync(file)),
+    baseline.assetHashes[name],
+    `Original asset changed: ${name}`,
+  );
+}
+assert.equal(
+  projectData.length,
+  3,
+  "Preserve the original archived third project data",
+);
+assert.equal(leadershipData.length, 3);
+assert.equal(experienceRoles.length, 2);
+const code = readFileSync(
+  new URL("../src/Content.jsx", import.meta.url),
+  "utf8",
+);
+for (const phrase of [
+  "TECH लेख",
+  "tieshatripathiwork14@gmail.com",
+  "https://www.linkedin.com/in/tieshatripathi14",
+  "https://x.com/Tieshaaaah",
+  "formsubmit.co",
+  "_honey",
+])
+  assert(code.includes(phrase), `Missing original content: ${phrase}`);
+console.log(
+  "Original asset hashes, project records, roles, links, recognition and contact functionality verified.",
+);
