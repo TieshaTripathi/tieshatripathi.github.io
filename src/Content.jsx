@@ -64,7 +64,7 @@ export default function Content({ paused, toggleMotion }) {
               <img
                 src="/about-moment-1280.webp"
                 srcSet="/about-moment-640.webp 640w, /about-moment-1280.webp 1280w"
-                sizes="(max-width:700px) 90vw, (max-width:1100px) 50vw, 28vw"
+                sizes="(max-width:700px) 90vw, 40vw"
                 width="1280"
                 height="1600"
                 decoding="async"

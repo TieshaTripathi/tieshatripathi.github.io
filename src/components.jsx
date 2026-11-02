@@ -23,7 +23,8 @@ export function Hero({ paused, toggleMotion }) {
     inputRef = useRef(null),
     timeline = useRef(null);
   const [photo, setPhoto] = useState(""),
-    [word, setWord] = useState(0);
+    [word, setWord] = useState(0),
+    [interest, setInterest] = useState(0);
   useEffect(
     () => () => {
       if (photo) URL.revokeObjectURL(photo);
@@ -43,6 +44,11 @@ export function Hero({ paused, toggleMotion }) {
       timeline.current = gsap
         .timeline({ defaults: { ease: "power3.out" } })
         .from(".name-word", { yPercent: 110, rotation: 5, duration: 1.3 })
+        .from(
+          ".hero-letter",
+          { yPercent: 100, rotationX: -70, stagger: 0.08, duration: 1.2 },
+          0.1,
+        )
         .from(
           ".portrait-wrap",
           {
@@ -65,10 +71,32 @@ export function Hero({ paused, toggleMotion }) {
           0.9,
         )
         .from(
-          ".hero-pillars > div",
+          ".hero-pillars > button",
           { y: 25, opacity: 0, stagger: 0.1, duration: 0.7 },
           1,
         );
+      // Persistent motion lives on separate layers from the entrance and pointer transforms.
+      gsap.to(".hero-orbit", {
+        rotation: 360,
+        duration: 32,
+        repeat: -1,
+        ease: "none",
+      });
+      gsap.to(".portrait-float", {
+        y: -9,
+        duration: 3.2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+      gsap.to(".hero-glow", {
+        scale: 1.2,
+        opacity: 0.72,
+        duration: 4,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
       const mm = gsap.matchMedia();
       mm.add("(min-width: 901px)", () => {
         gsap
@@ -86,7 +114,56 @@ export function Hero({ paused, toggleMotion }) {
             0,
           )
           .to(".portrait-wrap", { y: -55, rotation: 2, ease: "none" }, 0)
-          .to(".float-card", { y: -85, stagger: 0.05, ease: "none" }, 0);
+          .to(".float-card", { y: -18, stagger: 0.05, ease: "none" }, 0);
+      });
+      mm.add("(hover:hover) and (pointer:fine)", () => {
+        const scene = heroRef.current.querySelector(".portrait-interaction"),
+          name = heroRef.current.querySelector(".hero-name-parallax");
+        const rotateX = gsap.quickTo(scene, "rotationX", {
+          duration: 0.8,
+          ease: "power3.out",
+        });
+        const rotateY = gsap.quickTo(scene, "rotationY", {
+          duration: 0.8,
+          ease: "power3.out",
+        });
+        const photoX = gsap.quickTo(scene, "x", {
+          duration: 0.8,
+          ease: "power3.out",
+        });
+        const nameX = gsap.quickTo(name, "x", {
+          duration: 1,
+          ease: "power3.out",
+        });
+        const glowX = gsap.quickTo(".hero-glow", "x", {
+          duration: 1,
+          ease: "power3.out",
+        });
+        const move = (e) => {
+          if (e.pointerType !== "mouse") return;
+          const box = heroRef.current.getBoundingClientRect(),
+            x = (e.clientX - box.left) / box.width - 0.5,
+            y = (e.clientY - box.top) / box.height - 0.5;
+          rotateX(-y * 10);
+          rotateY(x * 15);
+          photoX(x * 22);
+          nameX(-x * 25);
+          glowX(x * 65);
+        };
+        const reset = () => {
+          rotateX(0);
+          rotateY(0);
+          photoX(0);
+          nameX(0);
+          glowX(0);
+        };
+        const hero = heroRef.current;
+        hero.addEventListener("pointermove", move);
+        hero.addEventListener("pointerleave", reset);
+        return () => {
+          hero.removeEventListener("pointermove", move);
+          hero.removeEventListener("pointerleave", reset);
+        };
       });
       return () => mm.revert();
     }, heroRef);
@@ -98,6 +175,10 @@ export function Hero({ paused, toggleMotion }) {
   function changePhoto(e) {
     const file = e.target.files?.[0];
     if (file?.type.startsWith("image/")) setPhoto(URL.createObjectURL(file));
+  }
+  function chooseInterest(index) {
+    setInterest(index);
+    setWord([2, 1, 4][index]);
   }
   function replay() {
     if (paused) {
@@ -119,6 +200,8 @@ export function Hero({ paused, toggleMotion }) {
         toggleMotion,
         word,
         words,
+        interest,
+        chooseInterest,
       }}
     />
   );

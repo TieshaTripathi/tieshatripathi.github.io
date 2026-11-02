@@ -106,6 +106,17 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
   });
   await page.getByRole("button", { name: /Co-Organizer/ }).click();
   await expect(card).toHaveAttribute("aria-expanded", "false");
+  await expect
+    .poll(() =>
+      page
+        .locator("img")
+        .evaluateAll((imgs) =>
+          imgs
+            .filter((img) => img.getBoundingClientRect().width > 0)
+            .every((img) => img.complete && img.naturalWidth > 0),
+        ),
+    )
+    .toBe(true);
   const images = await page.locator("img").evaluateAll((imgs) =>
     imgs
       .filter((img) => img.getBoundingClientRect().width > 0)
@@ -155,7 +166,7 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
   await page.reload();
   await expect(page.locator("#portrait-image")).toHaveAttribute(
     "src",
-    "/hero-portrait-1280.webp",
+    "/professional-portrait-cutout-1280.webp",
   );
   expect(errors).toEqual([]);
 });
@@ -229,4 +240,100 @@ test("animated scrolling and responsive resize", async ({ page }) => {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("hero interaction, clear portrait and About alignment", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  await page.waitForTimeout(1900);
+  const image = page.locator("#portrait-image");
+  await expect(image).toHaveAttribute(
+    "src",
+    "/professional-portrait-cutout-1280.webp",
+  );
+  await expect
+    .poll(() => image.evaluate((el) => el.complete && el.naturalWidth > 0))
+    .toBe(true);
+  const orbit = page.locator(".hero-orbit");
+  const first = await orbit.evaluate((el) => getComputedStyle(el).transform);
+  await page.waitForTimeout(350);
+  expect(await orbit.evaluate((el) => getComputedStyle(el).transform)).not.toBe(
+    first,
+  );
+  const scene = page.locator(".portrait-interaction");
+  const heroBox = await page.locator(".hero").boundingBox();
+  await page.mouse.move(heroBox.x + heroBox.width * 0.2, heroBox.y + 170);
+  await page.waitForTimeout(150);
+  const before = await scene.evaluate((el) => getComputedStyle(el).transform);
+  await page.mouse.move(heroBox.x + heroBox.width * 0.8, heroBox.y + 220);
+  await expect
+    .poll(() => scene.evaluate((el) => getComputedStyle(el).transform))
+    .not.toBe(before);
+  const rect = await image.boundingBox();
+  const face = {
+    left: rect.x + rect.width * 0.25,
+    right: rect.x + rect.width * 0.8,
+    top: rect.y + rect.height * 0.08,
+    bottom: rect.y + rect.height * 0.5,
+  };
+  for (const selector of [
+    ".card-code",
+    ".card-github",
+    ".photo-note",
+    ".photo-button",
+  ]) {
+    const box = await page.locator(selector).boundingBox();
+    expect(
+      box.x + box.width <= face.left ||
+        box.x >= face.right ||
+        box.y + box.height <= face.top ||
+        box.y >= face.bottom,
+      `${selector} must not cover the face`,
+    ).toBe(true);
+  }
+  const picker = await page.locator(".photo-button").boundingBox();
+  for (const selector of [".card-code", ".card-github"]) {
+    const badge = await page.locator(selector).boundingBox();
+    expect(
+      picker.x + picker.width <= badge.x ||
+        picker.x >= badge.x + badge.width ||
+        picker.y + picker.height <= badge.y ||
+        picker.y >= badge.y + badge.height,
+      "Hero cards must leave the photo picker usable",
+    ).toBe(true);
+  }
+  const products = page
+    .locator(".hero-pillars")
+    .getByRole("button", { name: /Products/ });
+  await products.click();
+  await expect(products).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".hero")).toHaveAttribute("data-interest", "1");
+  await expect(page.locator(".changing")).toHaveText("Product & testing");
+  const people = page
+    .locator(".hero-pillars")
+    .getByRole("button", { name: /People/ });
+  await people.press("Enter");
+  await expect(people).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".hero")).toHaveAttribute("data-interest", "2");
+  await page.getByRole("button", { name: "Motion on Ⅱ" }).click();
+  const stopped = await orbit.evaluate((el) => getComputedStyle(el).transform);
+  await page.waitForTimeout(200);
+  expect(await orbit.evaluate((el) => getComputedStyle(el).transform)).toBe(
+    stopped,
+  );
+  await page.locator("#about").scrollIntoViewIfNeeded();
+  const title = await page.locator("#about h2").boundingBox(),
+    frame = await page.locator("#about .about-moment").boundingBox(),
+    copy = await page.locator(".about-copy").boundingBox();
+  if (testInfo.project.use.viewport.width > 700) {
+    expect(Math.abs(title.y - frame.y)).toBeLessThan(3);
+    expect(Math.abs(title.x - copy.x)).toBeLessThan(2);
+  } else {
+    expect(Math.abs(title.x - frame.x)).toBeLessThan(2);
+    expect(frame.y).toBeGreaterThan(copy.y + copy.height);
+  }
+  await page.locator("#about").screenshot({
+    path: `test-results/${testInfo.project.name}-about-revised.png`,
+  });
 });

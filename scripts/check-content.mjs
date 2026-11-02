@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
+import sharp from "sharp";
 import { projectData, leadershipData, experienceRoles } from "../src/data.js";
 const baseline = JSON.parse(
   readFileSync(new URL("./content-baseline.json", import.meta.url), "utf8"),
@@ -35,6 +36,16 @@ for (const phrase of [
   "_honey",
 ])
   assert(code.includes(phrase), `Missing original content: ${phrase}`);
+const cutout = new URL(
+  "../public/professional-portrait-cutout.png",
+  import.meta.url,
+);
+const metadata = await sharp(readFileSync(cutout)).metadata();
+const stats = await sharp(readFileSync(cutout)).stats();
+assert(
+  metadata.hasAlpha && !stats.isOpaque,
+  "The replacement portrait must retain genuine transparency",
+);
 console.log(
   "Original asset hashes, project records, roles, links, recognition and contact functionality verified.",
 );

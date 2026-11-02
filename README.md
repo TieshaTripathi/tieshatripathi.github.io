@@ -29,6 +29,8 @@ npm test
 
 Tests cover four viewports, animated scrolling and resizing, image overflow, preserved content and links, modal focus, keyboard controls, whole-card leadership expansion, form validation, reduced motion, and axe WCAG A/AA checks. Reports and screenshots are written to `playwright-report/` and `test-results/`.
 
+The hero uses the supplied professional portrait with its background removed. Its orbital motion continues after the entrance; moving a mouse tilts the portrait and shifts the background type. The three interest buttons respond to pointer and keyboard input. Labels remain below the face. About uses aligned text and photo columns. See `docs/portrait-edit.md` for the cutout and edit prompt.
+
 ## Implementation
 
 - `src/Content.jsx` keeps the original sections and copy from `a3d519c`.
