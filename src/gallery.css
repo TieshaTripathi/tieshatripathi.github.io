@@ -1,0 +1,167 @@
+/* Leadership's existing expanded photo arrangement. */
+.role-body.role-body-wide {
+  grid-template-columns: 1fr;
+}
+.role-body-wide .role-photo {
+  aspect-ratio: 16/9;
+}
+#about .about-gallery .about-moment {
+  overflow: hidden;
+  background: #19271e;
+  aspect-ratio: 4/5;
+  touch-action: pan-y pinch-zoom;
+  isolation: isolate;
+}
+.about-gallery:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 8px;
+  border-radius: 12px;
+}
+.gallery-slide {
+  position: absolute;
+  inset: 14px;
+  overflow: hidden;
+  border: 1px solid #71806a;
+  border-radius: 12px;
+  transform-origin: 50% 85%;
+  background: #19271e;
+  box-shadow: 0 16px 35px #0005;
+  visibility: hidden;
+}
+.gallery-slide[data-active="true"] {
+  visibility: visible;
+}
+.gallery-back-card {
+  position: absolute;
+  inset: 20px;
+  border: 1px solid #71806a;
+  border-radius: 12px;
+  background-color: #40513a;
+  background-size: cover;
+  background-position: center;
+}
+.gallery-back-card.back-one {
+  transform: rotate(-5deg) scale(0.96);
+}
+.gallery-back-card.back-two {
+  transform: rotate(5deg) scale(0.96);
+  background-color: #807650;
+}
+.gallery-photo-surface {
+  position: absolute;
+  inset: 0;
+}
+.about-gallery .gallery-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.about-gallery .gallery-image.full-photo {
+  object-fit: contain;
+}
+.gallery-atmosphere {
+  position: absolute;
+  inset: -25px;
+  background-size: cover;
+  background-position: center;
+  filter: blur(22px) brightness(0.4);
+}
+#about .gallery-caption-stage {
+  position: relative;
+  height: 175px;
+  margin: 26px 0 22px;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+}
+.gallery-caption {
+  position: absolute;
+  inset: 23px 0 0;
+  visibility: hidden;
+}
+.gallery-caption[data-active="true"] {
+  visibility: visible;
+}
+.story-number {
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-bottom: 14px;
+}
+#about .gallery-caption h3 {
+  color: var(--cream);
+  margin: 0 0 12px;
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(23px, 2.1vw, 29px);
+  line-height: 1.2;
+}
+#about .gallery-caption p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+  margin: 0;
+  max-width: 46ch;
+}
+.gallery-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+.gallery-arrow {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--gold);
+  font-size: 20px;
+  transition:
+    background 0.3s,
+    transform 0.3s;
+}
+.gallery-arrow:hover {
+  background: var(--forest);
+  transform: translateY(-2px);
+}
+.about-gallery .gallery-counter {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-align: center;
+  margin: 0;
+  color: var(--gold);
+}
+@media (max-width: 900px) and (min-width: 701px) {
+  #about .gallery-caption-stage {
+    height: 185px;
+  }
+  #about .gallery-caption p {
+    font-size: 13px;
+  }
+}
+@media (max-width: 700px) {
+  #about .gallery-caption-stage {
+    height: 180px;
+    margin-top: 24px;
+    margin-bottom: 20px;
+  }
+}
+@media (max-width: 360px) {
+  #about .gallery-caption-stage {
+    height: 215px;
+  }
+  .gallery-slide {
+    inset: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-back-card {
+    transform: none;
+  }
+}
