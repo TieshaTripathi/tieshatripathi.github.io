@@ -1,9 +1,26 @@
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+
+function RevealWords({ text }) {
+  return (
+    <>
+      {text.split(/(\s+)/).map((word, i) =>
+        /\s/.test(word) ? (
+          word
+        ) : (
+          <span className="hero-word-mask" key={i}>
+            <span className="hero-copy-word">{word}</span>
+          </span>
+        ),
+      )}
+    </>
+  );
+}
+
 export function HeroContent({
   heroRef,
   inputRef,
   photo,
   changePhoto,
-  replay,
   paused,
   toggleMotion,
   word,
@@ -33,11 +50,13 @@ export function HeroContent({
       </h1>
       <div className="hero-body">
         <div className="intro">
-          <span className="hand">Hello, I’m Tiesha.</span>
+          <span className="hand">
+            <RevealWords text="Hello, I’m Tiesha." />
+          </span>
           <h2 className="hero-statement">
-            Curiosity
+            <RevealWords text="Curiosity" />
             <br />
-            in motion.
+            <RevealWords text="in motion." />
           </h2>
           <div className="role">
             Computer Engineering student
@@ -45,8 +64,7 @@ export function HeroContent({
             Cybersecurity / IoT / Blockchain
           </div>
           <p>
-            Exploring technology, products, and people. Learning by building,
-            testing, asking questions, and getting involved.
+            <RevealWords text="Exploring technology, products, and people. Learning by building, testing, asking questions, and getting involved." />
           </p>
           <a className="hero-work-link" href="#projects">
             Explore my work <span aria-hidden="true">↗</span>
@@ -120,7 +138,6 @@ export function HeroContent({
               </div>
             </div>
           </div>
-          <span className="photo-note">hello, that’s me ↙</span>
         </div>
         <div className="hero-aside">
           <span className="asterisk" aria-hidden="true">
@@ -135,79 +152,150 @@ export function HeroContent({
           </p>
           <div className="exploring">
             Currently exploring
-            <span className="changing" key={word} aria-live="off">
-              {words[word]}
-            </span>
+            <div
+              className="interest-copy-stage"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={interest}
+                  initial={{
+                    y: paused ? 0 : 20,
+                    opacity: paused ? 1 : 0,
+                    clipPath: "inset(0 0 100% 0)",
+                  }}
+                  animate={{ y: 0, opacity: 1, clipPath: "inset(0 0 0% 0)" }}
+                  exit={{
+                    y: paused ? 0 : -15,
+                    opacity: 0,
+                    clipPath: "inset(100% 0 0 0)",
+                  }}
+                  transition={{
+                    duration: paused ? 0 : 0.24,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                >
+                  <span className="changing">{words[word]}</span>
+                  <p className="interest-description">
+                    {
+                      [
+                        "Building, testing and learning.",
+                        "Curious about the experience.",
+                        "Bringing ideas together.",
+                      ][interest]
+                    }
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
-          <p className="hero-interaction-hint">
-            <span className="desktop-hint">
-              Move your cursor.
-              <br />
-            </span>
-            Choose an interest below <span aria-hidden="true">↓</span>
-          </p>
         </div>
       </div>
-      <div
-        className="hero-pillars"
-        role="group"
-        aria-label="Choose an area of interest"
-      >
-        <button
-          type="button"
-          aria-pressed={interest === 0}
-          onClick={() => chooseInterest(0)}
+      <LayoutGroup id="hero-interests">
+        <div
+          className="hero-pillars"
+          role="group"
+          aria-label="Choose an area of interest"
         >
-          <span>01 / EXPLORE</span>
-          <strong>Technology</strong>
-          <p>Building, testing and learning.</p>
-          <span className="pillar-arrow" aria-hidden="true">
-            ↗
-          </span>
-        </button>
-        <button
-          type="button"
-          aria-pressed={interest === 1}
-          onClick={() => chooseInterest(1)}
-        >
-          <span>02 / DISCOVER</span>
-          <strong>Products</strong>
-          <p>Curious about the experience.</p>
-          <span className="pillar-arrow" aria-hidden="true">
-            ↗
-          </span>
-        </button>
-        <button
-          type="button"
-          aria-pressed={interest === 2}
-          onClick={() => chooseInterest(2)}
-        >
-          <span>03 / CONNECT</span>
-          <strong>People</strong>
-          <p>Bringing ideas together.</p>
-          <span className="pillar-arrow" aria-hidden="true">
-            ↗
-          </span>
-        </button>
-      </div>
-      <div className="motion-bar">
-        <button className="replay-intro" onClick={replay} type="button">
-          Replay entrance ↻
-        </button>
-        <a className="motion-hint" href="#about">
-          Scroll to explore <span>↓</span>
-        </a>
-        <button
-          className="motion-toggle"
-          aria-pressed={paused}
-          onClick={toggleMotion}
-        >
-          {paused ? "Motion off ▷" : "Motion on Ⅱ"}
-        </button>
-      </div>
+          <button
+            type="button"
+            aria-pressed={interest === 0}
+            onClick={() => chooseInterest(0)}
+            onPointerEnter={(e) => {
+              if (e.pointerType === "mouse") chooseInterest(0);
+            }}
+            onFocus={() => chooseInterest(0)}
+          >
+            <span>01 / EXPLORE</span>
+            <strong>Technology</strong>
+            {interest === 0 && (
+              <motion.span
+                className="interest-indicator"
+                layoutId="interest-underline"
+                aria-hidden="true"
+                transition={
+                  paused
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 330, damping: 34 }
+                }
+              />
+            )}
+            <p>Building, testing and learning.</p>
+            <span className="pillar-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={interest === 1}
+            onClick={() => chooseInterest(1)}
+            onPointerEnter={(e) => {
+              if (e.pointerType === "mouse") chooseInterest(1);
+            }}
+            onFocus={() => chooseInterest(1)}
+          >
+            <span>02 / DISCOVER</span>
+            <strong>Products</strong>
+            {interest === 1 && (
+              <motion.span
+                className="interest-indicator"
+                layoutId="interest-underline"
+                aria-hidden="true"
+                transition={
+                  paused
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 330, damping: 34 }
+                }
+              />
+            )}
+            <p>Curious about the experience.</p>
+            <span className="pillar-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={interest === 2}
+            onClick={() => chooseInterest(2)}
+            onPointerEnter={(e) => {
+              if (e.pointerType === "mouse") chooseInterest(2);
+            }}
+            onFocus={() => chooseInterest(2)}
+          >
+            <span>03 / CONNECT</span>
+            <strong>People</strong>
+            {interest === 2 && (
+              <motion.span
+                className="interest-indicator"
+                layoutId="interest-underline"
+                aria-hidden="true"
+                transition={
+                  paused
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 330, damping: 34 }
+                }
+              />
+            )}
+            <p>Bringing ideas together.</p>
+            <span className="pillar-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </button>
+        </div>
+      </LayoutGroup>
       <div className="hero-footer">
         <span>Based in Mumbai, India</span>
-        <span>Keep scrolling. There’s a little more to me. ↓</span>
+        <button
+          className="motion-toggle motion-icon"
+          type="button"
+          aria-label="Pause animations"
+          aria-pressed={paused}
+          title={paused ? "Resume animations" : "Pause animations"}
+          onClick={toggleMotion}
+        >
+          <span aria-hidden="true">{paused ? "▷" : "Ⅱ"}</span>
+        </button>
       </div>
     </section>
   );

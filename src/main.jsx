@@ -20,16 +20,19 @@ function Header() {
   const [open, setOpen] = useState(false),
     [active, setActive] = useState("");
   useEffect(() => {
+    const sections = [...document.querySelectorAll("main section[id], .hero")];
     const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
-        }),
+      () => {
+        const readingLine = innerHeight * 0.25;
+        const visible = sections.find((section) => {
+          const rect = section.getBoundingClientRect();
+          return rect.top <= readingLine && rect.bottom > readingLine;
+        });
+        if (visible) setActive(visible.id || "");
+      },
       { rootMargin: "-15% 0px -60% 0px" },
     );
-    document
-      .querySelectorAll("main section[id], .hero")
-      .forEach((el) => observer.observe(el));
+    sections.forEach((section) => observer.observe(section));
     const close = (e) => {
       if (
         e.key === "Escape" ||

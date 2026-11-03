@@ -37,7 +37,7 @@ export const leadershipData = [
     title: "General Secretary",
     organization: "Student Council · SIES GST",
     description:
-      "I help coordinate student council activities, college events, and the committees involved. My responsibilities have included event planning, budgeting, and working with external partners.",
+      "I work with students and council committees to plan college events and coordinate the work behind them. My role includes event planning, budgeting, and communicating with external partners so the different teams can work together.",
     image: "/general-secretary-event.jpg",
     alt: "Live music performance on a blue-lit college event stage",
     imagePosition: "center bottom",
@@ -46,7 +46,7 @@ export const leadershipData = [
     title: "Co-Organizer",
     organization: "TEDxSIESGST",
     description:
-      "I helped organize our TEDx conference, working on speaker hospitality, stage logistics, and production schedules. I also coordinated with media, marketing, and design teams to support the event experience.",
+      "I helped bring TEDxSIESGST together, coordinating speaker hospitality, stage logistics, and the production schedule. I worked with the media, marketing, and design teams to keep their plans aligned with what was happening on stage.",
     image: "/leadership-event.jpg",
     alt: "Audience and stage at TEDxSIESGST",
   },
@@ -54,7 +54,7 @@ export const leadershipData = [
     title: "Management & Outreach Coordinator",
     organization: "Google Developers Group · SIES GST",
     description:
-      "I helped plan CyberStorm, coordinate technical logistics, and connect teams with mentors. I also supported community outreach and campus developer sessions.",
+      "I helped plan CyberStorm, organize the technical logistics, and connect participating teams with mentors. Alongside the event, I supported outreach and campus developer sessions, helping students connect with the GDG community.",
     image: "/gdg-community.jpg",
     alt: "Group photograph at a GDG community event",
     imagePosition: "center bottom",

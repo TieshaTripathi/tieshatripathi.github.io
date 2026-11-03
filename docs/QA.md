@@ -1,84 +1,56 @@
-# Migration verification
+# Portfolio refinement verification
 
-Verified on 3 November 2026 against the Vite production build. Source of truth: original portfolio commit `a3d519c`; all six original commits were inspected before implementation.
+Verified against the Vite production build on 3 November 2026. The original portfolio and the four owner-supplied screenshots remain the design/content reference. The initial migration inspected all six original Git commits; original commit `a3d519c` remains the asset/content baseline.
 
-The latest revision replaces the hero with the user-supplied professional portrait, removes its background, adds persistent and pointer-driven hero interactions, moves labels below the face, and aligns the About text and photograph. The remaining sections retain their existing implementation.
+## Current revision
 
-The earlier photo update assigned the supplied group photograph to the existing GDG card and the stage photograph to General Secretary. The current revision changes only the About gallery: purple-shirt campus portrait, seated TEDx photograph, and the newly uploaded podium photograph, in that order. The left heading and biography, hero, projects, experience, leadership and contact implementation are unchanged in this revision.
-
-The three user-provided headings and descriptions appear verbatim beneath the photographs. Portrait frames contain per-photo crops; the complete landscape TEDx composition uses contain sizing over a dimmed, blurred duplicate of the same photograph. The podium original is archived unchanged; responsive WebP derivatives use Sharp without retouching faces. Photo decoding completes before navigation replaces the current image. An intersection observer warms the image cache near About and disconnects on completion or unmount.
-
-Motion combines directional sliding, rotation around the lower card edge, scale depth, masks, fanning photographic back cards, and coordinated masked caption transitions. A transition lock coalesces rapid requests into the latest destination. Captions occupy reserved space to prevent layout shifts. Controls support thumbnails, previous/next, arrow keys, Home/End, and touch swipes. Vertical gestures retain native scrolling; there is no pinning or scroll capture.
+- Leadership descriptions are rewritten around the recorded responsibilities: council/student coordination, event planning and budgets, external partner communication; TEDx speaker hospitality, stage logistics, production schedules and coordination with media/marketing/design; GDG CyberStorm logistics, mentor connections, outreach and campus developer sessions. No sponsor contracts, attendance figures, awards or other new achievements are claimed. The glass cards, photographs and whole-card expansion behavior are preserved.
+- The gold name now has a measured typographic band above the portrait. The portrait keeps its foreground stacking layer without obscuring the letters. Existing columns, palette, hero content and interactive portrait remain.
+- Hero character/word reveals use React-rendered masks and the existing GSAP entrance timeline. This is an original compatible implementation, with no SplitText plugin or extra library dependency. Screen-reader text order and the accessible H1 name remain intact.
+- Technology, Products and People share one Motion `layoutId` underline. Hover, native keyboard focus, click and touch select the same state. The associated heading and short description use coordinated masked transitions; the old independently rotating timer is removed so the selection and copy cannot drift apart.
+- About retains its two-column desktop/tablet layout. The original main heading and both biography paragraphs remain on the left. The photo-specific title and refined short description now change on the left, alongside the photograph on the right. The bottom captions and thumbnail strip are removed; arrows, keyboard Home/End/left/right, touch swipes and numbered progress remain.
+- One reusable GSAP timeline coordinates outgoing/incoming photo layers, clip masks, scale, rotation, fanning back cards and caption motion. Target responsive images decode before a transition starts. Rapid input coalesces to the latest requested destination. The timeline is cleared/reused, and its context, observer and pending image requests are cleaned up when motion preferences change or the component unmounts. Reduced motion uses immediate state changes rather than zero-duration completion callbacks.
+- Visible cursor, interest-choice, replay and scrolling instructions are removed. Animation control is retained as an accessible icon without the visible “Motion on” label. The redundant project-selection instruction is removed; project actions and all actual navigation remain.
+- The navigation observer now derives its active section from the current reading position, preventing a stale highlight after returning to the hero.
 
 ## Results
 
 | Check | Result |
 | --- | --- |
 | Production build | Pass |
-| ESLint, including React Hooks rules | Pass, no warnings |
-| Original content / original asset SHA-256 checks | Pass |
-| Chromium 1440 × 900 | 6 tests passed; touch-only test skipped |
-| Chromium 768 × 1024 | 6 tests passed; touch-only test skipped |
-| Chromium 390 × 844 | 7 tests passed |
-| Chromium 320 × 740 | 7 tests passed |
-| axe WCAG 2 A/AA and 2.1 AA scans, page and project dialog, all sizes | No violations detected |
-| Production dependency audit | No vulnerabilities reported |
+| ESLint, including Hooks rules | Pass, no warnings |
+| Original asset SHA-256 and content/functionality checks | Pass |
+| Chromium 1440 × 900 | 7 applicable tests passed; touch-only case skipped |
+| Chromium 1280 × 900 | 7 applicable tests passed; touch-only case skipped |
+| Chromium 768 × 1024 | 7 applicable tests passed; touch-only case skipped |
+| Chromium 390 × 844 | 8 tests passed, including real touch input |
+| axe WCAG 2 A/AA and 2.1 AA, page and project dialog, all four sizes | No violations detected |
 
-The 26 applicable browser tests (plus two intentional desktop/tablet touch skips) cover the new photo assignments, gallery controls, animated and reduced-motion gallery navigation, original image loading, continuous hero motion after entrance, pointer response, keyboard/click interest selection, protected-face clearance, photo-picker clearance, About column alignment, original visible text fragments, role copy, original links, asset loading, horizontal overflow and image containment, project details and demo-video wiring, repository link, Escape handling, modal focus and restoration, whole-card leadership interaction by photo/text/keyboard, mobile navigation, native form validation, reduced motion, scroll animation, and resizing. The FormSubmit form was not submitted; tests do not send email. Browser tests run against the production server, not the Vite development server.
+The 29 applicable browser tests (32 configured, three deliberate non-mobile touch skips) cover original content/assets and links, hero name readability and face clearance, character/word masks, one active interest indicator, hover/focus/click and rapid focus changes, interest touch selection, all three About titles/descriptions and photographs, forward/backward wraparound, rapid repeated carousel clicks, Home/End, fixed section geometry, reduced-motion interruption mid-transition, further navigation after interruption, native vertical scrolling during touch gestures, leadership whole-card toggling and photographs, project dialogs, demo wiring, Escape/focus restoration, mobile navigation, browser console errors, and native contact-form validation. The contact form is not submitted; tests send no email.
 
-Visual review included desktop/mobile hero composition, numbered section flow, About photo alignment, mobile experience cards, and the expanded TEDx card. The original event JPEG is sideways; display derivatives rotate it correctly without altering the original file. Original files remain available at their original public URLs.
+Two issues discovered during verification were fixed before completion: stale navigation highlighting after returning to the hero, and a reduced-motion carousel lock caused by reusing a zero-duration timeline callback.
 
-## Motion and performance
+## Visual evidence
 
-- Masked hero letters, coordinated portrait entrance, persistent orbital motion and portrait float, pointer-driven depth, linked lower-portrait cards, and clickable interest controls; no pinned empty scroll interval.
-- Word-mask typography, changing chapter atmosphere, photo crop/rotation choreography, project image wipes and spring-driven pointer tilt.
-- Project dialog grows from the clicked card rectangle; detail text and media enter in sequence. Native dialog semantics plus keyboard controls are retained.
-- Experience cards reveal across the timeline with a growing accent rail.
-- Glass leadership cards animate measured content height and photograph scale. The entire visible surface toggles expansion.
-- Motion preference changes revert GSAP contexts. OS reduced motion and the visible pause control suppress scripted and CSS motion. Touch devices do not receive pointer tilt.
-- Responsive WebP images, reserved image geometry, lazy-loaded below-fold photos, and on-demand video. The replacement professional hero's alpha-preserving 640px WebP is approximately 66 KB. The original portfolio assets remain archived unchanged.
+All three photo/text pairs were reviewed at every requested width. Early, middle and late frames of the GSAP transition were captured and reviewed on desktop and mobile. Element screenshots hide fixed navigation, the skip link and the reading-progress bar only during capture, so fixed browser chrome cannot obscure the component being reviewed.
 
-## References and limits
+| Width | Hero | About: portrait / TEDx / podium |
+| --- | --- | --- |
+| 1440 | [Hero](qa/refined-1440-hero.png) | [1](qa/refined-1440-about-1.png) / [2](qa/refined-1440-about-2.png) / [3](qa/refined-1440-about-3.png) |
+| 1280 | [Hero](qa/refined-1280-hero.png) | [1](qa/refined-1280-about-1.png) / [2](qa/refined-1280-about-2.png) / [3](qa/refined-1280-about-3.png) |
+| 768 | [Hero](qa/refined-768-hero.png) | [1](qa/refined-768-about-1.png) / [2](qa/refined-768-about-2.png) / [3](qa/refined-768-about-3.png) |
+| 390 | [Hero](qa/refined-390-hero.png) | [1](qa/refined-390-about-1.png) / [2](qa/refined-390-about-2.png) / [3](qa/refined-390-about-3.png) |
 
-The Ashutosh Mujumdar Framer portfolio linked from Wall of Portfolios was inspected directly. Earlier Pinterest references were limited by sign-up overlays. For the latest About reference, Pinterest pin 1027031890040601748 links to the public Behance project [Professional 3D Music Interface Showcase for Artists](https://www.behance.net/gallery/244188651/Professional-3D-Music-Interface-Showcase-for-Artists). Its embedded seven-second animation was inspected through the public player: cards emerge, fan with depth and tilt, and settle above a folder base. The About implementation adapts that layered motion to personal photography rather than copying the music artwork. The implementation uses comparable layering, masked typography, spatial card motion and paced section transitions while retaining this portfolio's content and palette.
+- Desktop transition: [early](qa/refined-1440-transition-early.png), [middle](qa/refined-1440-transition-middle.png), [late](qa/refined-1440-transition-late.png)
+- Mobile transition: [early](qa/refined-390-transition-early.png), [middle](qa/refined-390-transition-middle.png), [late](qa/refined-390-transition-late.png)
+- Leadership: [General Secretary](qa/refined-1440-secretary.png), [TEDx](qa/refined-1440-tedx.png), [GDG](qa/refined-1440-gdg.png); matching 390px captures are also in `docs/qa`.
 
-Automated browser coverage is Chromium. Safari and Firefox have not been run. Automated accessibility scans supplement, and do not replace, human assistive-technology testing. The npm audit reports six moderate findings in development-only ESLint/minimatch dependencies; production dependencies have none. No incompatible major dependency overrides were applied to hide those findings.
+Photographs retain natural proportions. The landscape TEDx photograph uses contain sizing over a dimmed/blurred duplicate of the same image; original faces and files are unchanged. All original assets remain available. Earlier screenshots are retained as historical evidence, not the current design.
 
-The transparent replacement portrait and the exact built-in image-edit prompt are documented in [portrait-edit.md](portrait-edit.md).
+## Reference and limits
 
-## Review screenshots
+The supplied Pinterest reference points to pin 1027031890040601748 and the public Behance project [Professional 3D Music Interface Showcase for Artists](https://www.behance.net/gallery/244188651/Professional-3D-Music-Interface-Showcase-for-Artists). Its embedded seven-second animation was inspected through the public player in the preceding revision: cards emerge and fan with depth/tilt before settling. The current GSAP timeline adapts that layering to personal photographs and synchronized editorial text. It does not reproduce the music artwork. The earlier Ashutosh Mujumdar portfolio reference was also inspected during the migration.
 
-![Desktop hero](qa/desktop-hero.png)
+Automated browser coverage is Chromium; Firefox and Safari have not been run. axe scans supplement human assistive-technology testing. The earlier dependency audit found no production vulnerabilities and six moderate development-only ESLint/minimatch findings; no dependencies were changed in this revision. The professional hero cutout's provenance is documented in [portrait-edit.md](portrait-edit.md).
 
-![Desktop About](qa/desktop-about.png)
-
-![Mobile hero](qa/mobile-hero.png)
-
-![Mobile leadership](qa/mobile-leadership.png)
-
-## Publication
-
-No merge or deployment was performed. The feature branch has a PR validation workflow and a main-only Pages deployment job. Before an approved merge, set the repository's Pages source to **GitHub Actions** as described in the README. The existing production settings have not been changed.
-
-### Added photo review
-
-![About gallery](qa/desktop-about-gallery.png)
-
-![GDG photograph](qa/desktop-gdg.png)
-
-![General Secretary photograph](qa/mobile-general-secretary.png)
-
-
-## About photographic story verification
-
-Forward and backward selection of all three photos, wraparound, Home/End, rapid six-click input, stable gallery height and captions below photographs passed at all four screen sizes. Real Chromium touch events tested three forward swipes, backward wraparound, and vertical scrolling without changing photos at both mobile sizes. Page and dialog axe checks include the new gallery; exiting cards and captions are hidden from assistive technology. Reduced motion removes travel, rotation and timing while retaining navigation.
-
-Current visual evidence:
-
-- [Desktop About layout](qa/desktop-about-story-layout.png)
-- [Layered transition in progress](qa/desktop-about-story-transition.png)
-- Desktop: [portrait](qa/desktop-about-story-1.png), [TEDx](qa/desktop-about-story-2.png), [podium](qa/desktop-about-story-3.png)
-- Mobile: [portrait](qa/mobile-about-story-1.png), [TEDx](qa/mobile-about-story-2.png), [podium](qa/mobile-about-story-3.png)
-- Tablet and 320px screenshots are also saved in `docs/qa/*-about-story-*.png`.
-
-Only the requested original About placeholder caption is exempted from the historical visible-text baseline; the replacement captions are tested separately. The original white-shirt photograph remains in public assets. No other section source was modified for this revision.
+No merge, production deployment or Pages-settings changes are performed. The existing workflow runs PR checks and permits deployment only from main after owner approval and the documented Pages configuration change.

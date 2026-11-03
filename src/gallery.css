@@ -1,4 +1,4 @@
-/* The existing leadership layout is intentionally preserved. */
+/* Leadership's existing expanded photo arrangement. */
 .role-body.role-body-wide {
   grid-template-columns: 1fr;
 }
@@ -26,13 +26,17 @@
   transform-origin: 50% 85%;
   background: #19271e;
   box-shadow: 0 16px 35px #0005;
+  visibility: hidden;
+}
+.gallery-slide[data-active="true"] {
+  visibility: visible;
 }
 .gallery-back-card {
   position: absolute;
   inset: 20px;
   border: 1px solid #71806a;
   border-radius: 12px;
-  background: #40513a;
+  background-color: #40513a;
   background-size: cover;
   background-position: center;
 }
@@ -41,7 +45,7 @@
 }
 .gallery-back-card.back-two {
   transform: rotate(5deg) scale(0.96);
-  background: #807650;
+  background-color: #807650;
 }
 .gallery-photo-surface {
   position: absolute;
@@ -63,38 +67,49 @@
   background-position: center;
   filter: blur(22px) brightness(0.4);
 }
-.gallery-caption-stage {
+#about .gallery-caption-stage {
   position: relative;
-  height: 142px;
-  margin-top: 23px;
+  height: 175px;
+  margin: 26px 0 22px;
   overflow: hidden;
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
 }
 .gallery-caption {
   position: absolute;
-  inset: 0;
+  inset: 23px 0 0;
+  visibility: hidden;
 }
-.about-gallery .gallery-caption h3 {
+.gallery-caption[data-active="true"] {
+  visibility: visible;
+}
+.story-number {
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-bottom: 14px;
+}
+#about .gallery-caption h3 {
   color: var(--cream);
   margin: 0 0 12px;
   font-family: Georgia, serif;
   font-weight: 400;
-  font-size: clamp(21px, 2vw, 27px);
+  font-size: clamp(23px, 2.1vw, 29px);
   line-height: 1.2;
 }
-.about-gallery .gallery-caption p {
+#about .gallery-caption p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.8;
   margin: 0;
-  max-width: 41ch;
+  max-width: 46ch;
 }
 .gallery-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-top: 20px;
+  margin-top: 18px;
 }
 .gallery-arrow {
   display: grid;
@@ -115,69 +130,31 @@
   background: var(--forest);
   transform: translateY(-2px);
 }
-.gallery-thumbnails {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-.gallery-thumbnails button {
-  position: relative;
-  display: block;
-  width: 46px;
-  height: 56px;
-  padding: 3px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--bg);
-  transition:
-    border-color 0.3s,
-    transform 0.3s;
-}
-.gallery-thumbnails button img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 4px;
-}
-.gallery-thumbnails button[aria-pressed="true"] {
-  border-color: var(--gold);
-  transform: translateY(-4px);
-}
-.gallery-dot {
-  position: absolute;
-  bottom: -7px;
-  left: calc(50% - 2px);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--gold);
-  opacity: 0;
-}
-.gallery-thumbnails button[aria-pressed="true"] .gallery-dot {
-  opacity: 1;
-}
 .about-gallery .gallery-counter {
   font-size: 10px;
   letter-spacing: 2px;
   text-align: center;
-  margin-top: 15px;
+  margin: 0;
   color: var(--gold);
 }
 @media (max-width: 900px) and (min-width: 701px) {
-  .gallery-caption-stage {
-    height: 172px;
+  #about .gallery-caption-stage {
+    height: 185px;
+  }
+  #about .gallery-caption p {
+    font-size: 13px;
+  }
+}
+@media (max-width: 700px) {
+  #about .gallery-caption-stage {
+    height: 180px;
+    margin-top: 24px;
+    margin-bottom: 20px;
   }
 }
 @media (max-width: 360px) {
-  .gallery-controls {
-    gap: 10px;
-  }
-  .gallery-thumbnails {
-    gap: 7px;
-  }
-  .gallery-caption-stage {
-    height: 166px;
+  #about .gallery-caption-stage {
+    height: 215px;
   }
   .gallery-slide {
     inset: 10px;

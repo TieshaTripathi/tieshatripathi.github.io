@@ -15,7 +15,7 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
   await expect(
     page.getByRole("heading", { name: "Tiesha", exact: true }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Motion on Ⅱ" }).click();
+  await page.getByRole("button", { name: "Pause animations" }).click();
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(200);
   await page.screenshot({
@@ -33,13 +33,22 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
     await button.click();
   }
   const normalize = (text) => text.replace(/\s+/g, "");
-  // The GDG placeholder is deliberately replaced by the user's group photograph.
-  for (const fragment of baseline.fragments.filter(
-    (text) =>
-      !["A space for a community moment.", "A moment worth sharing."].includes(
-        text,
-      ),
-  ))
+  // User-requested replacements: placeholder photos/captions and leadership wording.
+  const rewrittenRoles = baseline.fragments.filter((text) =>
+    /^I help coordinate student council|^I helped organize our TEDx|^I helped plan CyberStorm/.test(
+      text,
+    ),
+  );
+  for (const fragment of baseline.fragments
+    .map((text) => text.replace("Choose a project to take a closer look ↗", ""))
+    .filter(
+      (text) =>
+        ![
+          "A space for a community moment.",
+          "A moment worth sharing.",
+          ...rewrittenRoles,
+        ].includes(text),
+    ))
     expect(normalize(preservedText)).toContain(normalize(fragment));
   for (const id of [
     "about",
@@ -181,7 +190,7 @@ test("reduced motion and accessibility", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(
-    page.getByRole("button", { name: "Motion off ▷" }),
+    page.getByRole("button", { name: "Pause animations" }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: /General Secretary/ }).click();
   const report = await new AxeBuilder({ page })
@@ -283,12 +292,7 @@ test("hero interaction, clear portrait and About alignment", async ({
     top: rect.y + rect.height * 0.08,
     bottom: rect.y + rect.height * 0.5,
   };
-  for (const selector of [
-    ".card-code",
-    ".card-github",
-    ".photo-note",
-    ".photo-button",
-  ]) {
+  for (const selector of [".card-code", ".card-github", ".photo-button"]) {
     const box = await page.locator(selector).boundingBox();
     expect(
       box.x + box.width <= face.left ||
@@ -316,13 +320,14 @@ test("hero interaction, clear portrait and About alignment", async ({
   await expect(products).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".hero")).toHaveAttribute("data-interest", "1");
   await expect(page.locator(".changing")).toHaveText("Product & testing");
+  await expect(page.locator(".interest-indicator")).toHaveCount(1);
   const people = page
     .locator(".hero-pillars")
     .getByRole("button", { name: /People/ });
   await people.press("Enter");
   await expect(people).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".hero")).toHaveAttribute("data-interest", "2");
-  await page.getByRole("button", { name: "Motion on Ⅱ" }).click();
+  await page.getByRole("button", { name: "Pause animations" }).click();
   const stopped = await orbit.evaluate((el) => getComputedStyle(el).transform);
   await page.waitForTimeout(200);
   expect(await orbit.evaluate((el) => getComputedStyle(el).transform)).toBe(
@@ -344,139 +349,137 @@ test("hero interaction, clear portrait and About alignment", async ({
   });
 });
 
-test("new About gallery and leadership photographs", async ({
+test("synchronized About photos and existing leadership expansion", async ({
   page,
-}, testInfo) => {
+}) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Motion on Ⅱ" }).click();
-  const gallery = page.locator(".about-gallery");
-  await gallery.scrollIntoViewIfNeeded();
-  await gallery
-    .getByRole("button", { name: "Campus portrait", exact: true })
-    .click();
-  await expect(
-    gallery.getByRole("img", {
-      name: "Tiesha in a purple shirt outdoors on campus",
-    }),
-  ).toBeVisible();
-  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
-  await gallery.getByRole("button", { name: "Next About photo" }).click();
-  await expect(
-    gallery.getByRole("img", {
-      name: "Tiesha sitting in front of the TEDx letters",
-    }),
-  ).toBeVisible();
-  await expect(gallery.locator(".gallery-counter")).toHaveText("02 / 03");
-  await gallery
-    .getByRole("button", { name: "TEDx moment", exact: true })
-    .press("ArrowLeft");
-  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
-  await expect
-    .poll(() =>
-      gallery
-        .locator(".gallery-slide img")
-        .evaluateAll((imgs) =>
-          imgs.every((img) => img.complete && img.naturalWidth > 0),
-        ),
-    )
-    .toBe(true);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  await page.locator("#about").screenshot({
-    path: `test-results/${testInfo.project.name}-about-gallery.png`,
-  });
-  const secretary = page.getByRole("button", { name: /General Secretary/ });
-  await secretary.click();
-  await expect(secretary.locator(".role-photo img")).toHaveAttribute(
-    "src",
-    "/general-secretary-event-1280.webp",
-  );
-  const gdg = page.getByRole("button", {
-    name: /Management & Outreach Coordinator/,
-  });
-  await gdg.click();
-  await expect(gdg.locator(".role-photo img")).toHaveAttribute(
-    "src",
-    "/gdg-community-1280.webp",
-  );
-  await expect
-    .poll(() =>
-      gdg
-        .locator("img")
-        .evaluate((img) => img.complete && img.naturalWidth > 0),
-    )
-    .toBe(true);
-  await page
-    .locator("#leadership")
-    .screenshot({ path: `test-results/${testInfo.project.name}-gdg.png` });
-  await gdg.locator(".role-photo").click();
-  await expect(gdg).toHaveAttribute("aria-expanded", "false");
-  await page.getByRole("button", { name: "Motion off ▷" }).click();
-  await gallery
-    .getByRole("button", { name: "TEDx moment", exact: true })
-    .click();
-  await expect(
-    gallery.getByRole("img", {
-      name: "Tiesha sitting in front of the TEDx letters",
-    }),
-  ).toBeVisible();
-  await page.waitForTimeout(700);
-  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
-});
-
-test("About story choreography, rapid navigation and stable captions", async ({
-  page,
-}, testInfo) => {
-  await page.goto("/");
-  const gallery = page.locator(".about-gallery");
-  await gallery.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1100);
-  const frame = gallery.locator(".about-moment");
-  const initialHeight = (await gallery.boundingBox()).height;
+  await page.getByRole("button", { name: "Pause animations" }).click();
+  const about = page.locator("#about"),
+    gallery = about.locator(".about-gallery");
+  await about.scrollIntoViewIfNeeded();
   const headings = [
     "A little more than a title.",
     "Beyond the classroom.",
     "Learning to take the mic.",
   ];
-  for (const index of [1, 2, 0, 2, 1, 0]) {
-    await gallery
-      .getByRole("button", {
-        name: ["Campus portrait", "TEDx moment", "Podium speech"][index],
-        exact: true,
-      })
-      .click();
+  const bases = ["about-campus-portrait", "about-moment", "about-podium"];
+  const descriptions = [
+    "I’m still figuring things out, following my curiosity, and making time to try something new.",
+    "Some of my favourite experiences have come from bringing people together around an idea or an event.",
+    "Whether I’m behind the scenes or speaking to a room, I’m learning to feel more at home in each role.",
+  ];
+  for (let i = 0; i < 3; i++) {
     await expect(gallery.locator(".gallery-counter")).toHaveText(
-      `0${index + 1} / 03`,
+      `0${i + 1} / 03`,
     );
-    await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
-    await expect(gallery.locator(".gallery-caption")).toHaveCount(1);
     await expect(
-      gallery.getByRole("heading", { name: headings[index], exact: true }),
+      about.locator(".gallery-caption[data-active=true] h3"),
+    ).toHaveText(headings[i]);
+    await expect(
+      about.locator(".gallery-caption[data-active=true] p"),
+    ).toHaveText(descriptions[i]);
+    await expect(
+      gallery.locator(".gallery-slide[data-active=true] img"),
+    ).toHaveAttribute("src", `/${bases[i]}-1280.webp`);
+    await expect(
+      about.locator(".about-copy .gallery-caption[data-active=true]"),
     ).toBeVisible();
     expect(
-      Math.abs((await gallery.boundingBox()).height - initialHeight),
+      await gallery
+        .locator(".gallery-caption-stage,.gallery-thumbnails")
+        .count(),
+    ).toBe(0);
+    await gallery.getByRole("button", { name: "Next About photo" }).click();
+  }
+  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
+  for (const [name, src] of [
+    [/General Secretary/, "general-secretary-event"],
+    [/Co-Organizer/, "leadership-event"],
+    [/Management & Outreach Coordinator/, "gdg-community"],
+  ]) {
+    const role = page.getByRole("button", { name });
+    await role.click();
+    await expect(role).toHaveAttribute("aria-expanded", "true");
+    await expect(role.locator(".role-photo img")).toHaveAttribute(
+      "src",
+      `/${src}-1280.webp`,
+    );
+    await expect(role.locator(".role-description")).not.toBeEmpty();
+    await role.locator(".role-photo").click();
+    await expect(role).toHaveAttribute("aria-expanded", "false");
+  }
+});
+
+test("GSAP About timeline stays synchronized and stable under rapid input", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  const about = page.locator("#about"),
+    gallery = about.locator(".about-gallery");
+  await about.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1200);
+  const initialHeight = (await about.boundingBox()).height;
+  for (const [key, count] of [
+    ["ArrowRight", 2],
+    ["ArrowRight", 3],
+    ["ArrowRight", 1],
+    ["ArrowLeft", 3],
+    ["ArrowLeft", 2],
+    ["ArrowLeft", 1],
+  ]) {
+    await gallery.focus();
+    await gallery.press(key);
+    await expect(gallery.locator(".gallery-counter")).toHaveText(
+      `0${count} / 03`,
+    );
+    await expect(about).toHaveAttribute("data-transitioning", "false");
+    await expect
+      .poll(() =>
+        about
+          .locator(".gallery-slide[data-active=true]")
+          .getAttribute("aria-hidden"),
+      )
+      .toBe("false");
+    const photoIndex = await about
+      .locator(".gallery-slide[data-active=true]")
+      .evaluate((el) =>
+        [...el.parentNode.querySelectorAll(".gallery-slide")].indexOf(el),
+      );
+    const textIndex = await about
+      .locator(".gallery-caption[data-active=true]")
+      .evaluate((el) => [...el.parentNode.children].indexOf(el));
+    expect(textIndex).toBe(photoIndex);
+    await expect(
+      gallery.locator(".gallery-slide[data-active=true]"),
+    ).toBeVisible();
+    expect(
+      Math.abs((await about.boundingBox()).height - initialHeight),
     ).toBeLessThan(2);
   }
   await gallery
     .getByRole("button", { name: "Next About photo" })
-    .click({ clickCount: 6, delay: 30 });
-  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
-  await expect(gallery.locator(".gallery-caption")).toHaveCount(1);
+    .click({ clickCount: 6, delay: 35 });
   await gallery.focus();
   await gallery.press("End");
   await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
-  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
-  await gallery.press("ArrowRight");
+  await expect(about).toHaveAttribute("data-transitioning", "false");
+  await expect(
+    about.locator(".gallery-caption[data-active=true] h3"),
+  ).toHaveText("Learning to take the mic.");
+  await gallery.press("Home");
   await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
-  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
-  const caption = await gallery.locator(".gallery-caption-stage").boundingBox(),
-    box = await frame.boundingBox();
-  expect(caption.y).toBeGreaterThan(box.y + box.height);
-  await gallery.screenshot({
-    path: `test-results/${testInfo.project.name}-story.png`,
+  await expect(about).toHaveAttribute("data-transitioning", "false");
+  await gallery.getByRole("button", { name: "Next About photo" }).click();
+  await expect(gallery.locator(".gallery-counter")).toHaveText("02 / 03");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(about).toHaveAttribute("data-transitioning", "false");
+  await expect(
+    about.locator(".gallery-caption[data-active=true] h3"),
+  ).toHaveText("Beyond the classroom.");
+  await gallery.getByRole("button", { name: "Next About photo" }).click();
+  await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
+  await about.screenshot({
+    path: `test-results/${testInfo.project.name}-synchronized-about.png`,
   });
 });
 
@@ -484,8 +487,8 @@ test("About touch swipes and natural vertical scrolling", async ({
   browser,
 }, testInfo) => {
   test.skip(
-    !testInfo.project.name.includes("mobile"),
-    "Touch behavior uses mobile viewports",
+    testInfo.project.name !== "mobile",
+    "Real touch behavior uses the requested mobile viewport",
   );
   const context = await browser.newContext({
     viewport: testInfo.project.use.viewport,
@@ -494,7 +497,10 @@ test("About touch swipes and natural vertical scrolling", async ({
   });
   const page = await context.newPage();
   await page.goto("http://127.0.0.1:5175/");
-  const gallery = page.locator(".about-gallery"),
+  await page.locator(".hero-pillars > button").nth(1).tap();
+  await expect(page.locator(".changing")).toHaveText("Product & testing");
+  const about = page.locator("#about"),
+    gallery = about.locator(".about-gallery"),
     frame = gallery.locator(".about-moment");
   await frame.scrollIntoViewIfNeeded();
   await page.waitForTimeout(1200);
@@ -522,14 +528,61 @@ test("About touch swipes and natural vertical scrolling", async ({
     await expect(gallery.locator(".gallery-counter")).toHaveText(
       `0${count} / 03`,
     );
-    await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+    await expect(about).toHaveAttribute("data-transitioning", "false");
   }
   await swipe(140, 5);
   await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
-  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  await expect(about).toHaveAttribute("data-transitioning", "false");
   const before = await page.evaluate(() => scrollY);
   await swipe(0, -130);
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before);
   await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
   await context.close();
+});
+
+test("readable hero, shared interest motion and interface cleanup", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(1900);
+  const name = await page.locator(".giant").boundingBox(),
+    photo = await page.locator("#portrait-image").boundingBox();
+  expect(name.y + name.height).toBeLessThan(photo.y + photo.height * 0.08);
+  expect(await page.locator(".hero-letter").count()).toBe(6);
+  expect(await page.locator(".hero-copy-word").count()).toBeGreaterThan(15);
+  for (const phrase of [
+    "Move your cursor",
+    "Choose an interest below",
+    "Replay entrance",
+    "Motion on",
+    "Scroll to explore",
+    "Keep scrolling",
+  ])
+    expect(await page.locator("main").textContent()).not.toContain(phrase);
+  const cards = page.locator(".hero-pillars > button");
+  for (const i of [1, 2, 0, 2, 1]) {
+    await cards.nth(i).focus();
+    await expect(cards.nth(i)).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(".changing")).toHaveText(
+      ["Cybersecurity", "Product & testing", "People & teams"][i],
+    );
+    await expect(page.locator(".interest-indicator")).toHaveCount(1);
+    await expect(cards.nth(i).locator(".interest-indicator")).toBeAttached();
+  }
+  await cards.evaluateAll((buttons) => {
+    for (const i of [0, 2, 1, 0, 1, 2]) buttons[i].focus();
+  });
+  await expect(cards.nth(2)).toHaveAttribute("aria-pressed", "true");
+  await cards.nth(2).hover();
+  await expect(cards.nth(2)).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".changing")).toHaveText("People & teams");
+  await page.waitForTimeout(500);
+  const indicator = await page.locator(".interest-indicator").boundingBox(),
+    selected = await cards.nth(2).boundingBox();
+  expect(Math.abs(indicator.x - selected.x)).toBeLessThan(2);
+  expect(Math.abs(indicator.width - selected.width)).toBeLessThan(2);
+  await page.locator(".hero").screenshot({
+    path: `test-results/${testInfo.project.name}-refined-hero.png`,
+  });
 });

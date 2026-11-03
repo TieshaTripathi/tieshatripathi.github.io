@@ -513,3 +513,109 @@
     will-change: auto;
   }
 }
+/* Hero refinements retain the existing composition and foreground portrait. */
+.hero .giant {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  margin: 0;
+  padding: 0 0.08em 0.1em;
+  font-size: clamp(140px, 19vw, 260px);
+  line-height: 0.88;
+}
+.hero .hero-body {
+  z-index: 2;
+  margin-top: -18px;
+  height: clamp(420px, 50svh, 500px);
+}
+.hero .portrait-wrap {
+  z-index: 3;
+}
+.hero-word-mask {
+  display: inline-block;
+  overflow: clip;
+  vertical-align: bottom;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.hero-copy-word {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+.hero .hero-pillars {
+  position: relative;
+}
+.hero-pillars > button:after {
+  content: none;
+}
+.hero-pillars .interest-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  height: 2px;
+  margin: 0;
+  background: var(--gold);
+  pointer-events: none;
+  z-index: 2;
+}
+.hero .changing {
+  animation: none;
+  min-height: 0;
+}
+.interest-copy-stage {
+  min-height: 100px;
+  overflow: hidden;
+}
+.hero .interest-description {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.hero .hero-footer {
+  align-items: center;
+}
+.motion-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+}
+.motion-icon:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+@media (max-width: 900px) {
+  .hero .giant {
+    font-size: clamp(130px, 24vw, 215px);
+  }
+  .hero .hero-body {
+    height: auto;
+    margin-top: -12px;
+    padding-top: 0;
+  }
+}
+@media (max-width: 700px) {
+  .hero .giant {
+    font-size: clamp(120px, 27vw, 185px);
+  }
+  .hero .hero-body {
+    margin-top: -5px;
+  }
+  .hero .intro p {
+    max-width: 42ch;
+  }
+  .hero .interest-copy-stage {
+    min-height: 115px;
+  }
+}
+.hero .motion-icon > span {
+  display: block;
+}

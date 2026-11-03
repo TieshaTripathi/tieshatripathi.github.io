@@ -21,46 +21,7 @@ export default function Content({ paused, toggleMotion }) {
         </div>
       </div>
       <div className="shell">
-        <section id="about" className="about reveal">
-          <svg
-            className="chapter-watermark"
-            aria-hidden="true"
-            viewBox="0 0 260 240"
-          >
-            <text x="0" y="210">
-              01
-            </text>
-          </svg>
-          <div>
-            <p className="kicker">
-              <b>01 /</b> About me
-            </p>
-            <Heading>
-              A little technical.
-              <br />A little people person.
-              <br />
-              <em>A lot of curiosity.</em>
-            </Heading>
-          </div>
-          <div className="about-copy">
-            <p>
-              I’m Tiesha, a Computer Engineering student specializing in
-              Cybersecurity, IoT, and Blockchain. I’m curious about technology,
-              products, and how people use them.
-            </p>
-            <p>
-              I enjoy testing ideas, spotting what could work better, and
-              bringing teams together. I’m still exploring where I’d like to go
-              deeper—and learning as I go.
-            </p>
-            <div className="tags">
-              <span className="tag">Technology</span>
-              <span className="tag">Products & testing</span>
-              <span className="tag">People & teams</span>
-            </div>
-          </div>
-          <AboutGallery paused={paused} />
-        </section>
+        <AboutGallery paused={paused} />
         <section id="projects" className="reveal">
           <svg
             className="chapter-watermark"
@@ -81,8 +42,6 @@ export default function Content({ paused, toggleMotion }) {
             <p>
               Two selected projects. Different problems.
               <br />A focused look at what I’ve been exploring.
-              <br />
-              Choose a project to take a closer look ↗
             </p>
           </div>
           <Projects paused={paused} />

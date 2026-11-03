@@ -23,7 +23,6 @@ export function Hero({ paused, toggleMotion }) {
     inputRef = useRef(null),
     timeline = useRef(null);
   const [photo, setPhoto] = useState(""),
-    [word, setWord] = useState(0),
     [interest, setInterest] = useState(0);
   useEffect(
     () => () => {
@@ -31,13 +30,6 @@ export function Hero({ paused, toggleMotion }) {
     },
     [photo],
   );
-  useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => {
-      if (!document.hidden) setWord((v) => (v + 1) % words.length);
-    }, 4200);
-    return () => clearInterval(id);
-  }, [paused]);
   useLayoutEffect(() => {
     if (paused) return;
     const ctx = gsap.context(() => {
@@ -66,7 +58,12 @@ export function Hero({ paused, toggleMotion }) {
           0.55,
         )
         .from(
-          ".float-card, .photo-note",
+          ".hero-copy-word",
+          { yPercent: 110, rotation: 3, stagger: 0.018, duration: 0.75 },
+          0.55,
+        )
+        .from(
+          ".float-card",
           { scale: 0.65, opacity: 0, stagger: 0.15, duration: 0.7 },
           0.9,
         )
@@ -110,7 +107,7 @@ export function Hero({ paused, toggleMotion }) {
           })
           .to(
             ".name-word",
-            { y: 90, scale: 1.08, opacity: 0.15, ease: "none" },
+            { y: 22, scale: 1.02, opacity: 0.35, ease: "none" },
             0,
           )
           .to(".portrait-wrap", { y: -55, rotation: 2, ease: "none" }, 0)
@@ -178,15 +175,6 @@ export function Hero({ paused, toggleMotion }) {
   }
   function chooseInterest(index) {
     setInterest(index);
-    setWord([2, 1, 4][index]);
-  }
-  function replay() {
-    if (paused) {
-      toggleMotion();
-      return;
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    timeline.current?.restart();
   }
   return (
     <HeroContent
@@ -195,10 +183,9 @@ export function Hero({ paused, toggleMotion }) {
         inputRef,
         photo,
         changePhoto,
-        replay,
         paused,
         toggleMotion,
-        word,
+        word: [2, 1, 4][interest],
         words,
         interest,
         chooseInterest,

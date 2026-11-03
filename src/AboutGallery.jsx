@@ -1,311 +1,376 @@
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useIsPresent } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { gsap } from "gsap";
+import Heading from "./Heading";
 
 const photos = [
   {
     base: "about-campus-portrait",
     alt: "Tiesha in a purple shirt outdoors on campus",
-    label: "Campus portrait",
     heading: "A little more than a title.",
     description:
-      "Somewhere between figuring things out and trying everything that interests me.",
+      "I’m still figuring things out, following my curiosity, and making time to try something new.",
     position: "50% 48%",
   },
   {
     base: "about-moment",
     alt: "Tiesha sitting in front of the TEDx letters",
-    label: "TEDx moment",
     heading: "Beyond the classroom.",
     description:
-      "Some of my favourite experiences have come from bringing ideas, events, and people together.",
+      "Some of my favourite experiences have come from bringing people together around an idea or an event.",
     full: true,
     position: "center",
   },
   {
     base: "about-podium",
     alt: "Tiesha speaking at a podium with a microphone",
-    label: "Podium speech",
     heading: "Learning to take the mic.",
     description:
-      "From working behind the scenes to standing in front of a room, every experience teaches me something.",
+      "Whether I’m behind the scenes or speaking to a room, I’m learning to feel more at home in each role.",
     position: "57% 42%",
   },
 ];
-const ease = [0.22, 1, 0.36, 1];
 
-function StoryPhoto({ photo, direction, paused, settled }) {
-  const present = useIsPresent();
-  return (
-    <motion.div
-      className="gallery-slide"
-      aria-hidden={!present}
-      custom={direction}
-      variants={{
-        enter: (d) => ({
-          x: paused ? 0 : `${d * 72}%`,
-          rotate: paused ? 0 : d * 9,
-          scale: paused ? 1 : 0.88,
-          clipPath: paused
-            ? "inset(0)"
-            : `inset(0 ${d < 0 ? 45 : 0}% 0 ${d > 0 ? 45 : 0}% round 12px)`,
-        }),
-        settled: {
-          x: 0,
-          rotate: 0,
-          scale: 1,
-          clipPath: "inset(0% 0% 0% 0% round 12px)",
-        },
-        exit: (d) => ({
-          x: paused ? 0 : `${-d * 45}%`,
-          rotate: paused ? 0 : -d * 12,
-          scale: paused ? 1 : 0.84,
-          opacity: 0,
-        }),
-      }}
-      initial="enter"
-      animate="settled"
-      exit="exit"
-      transition={{ duration: paused ? 0 : 0.85, ease }}
-      onAnimationComplete={(name) => {
-        if (name === "settled" && present) settled();
-      }}
-    >
-      {photo.full && (
-        <div
-          className="gallery-atmosphere"
-          style={{ backgroundImage: `url(/${photo.base}-640.webp)` }}
-        />
-      )}
-      <div className="gallery-photo-surface">
-        <img
-          className={`gallery-image${photo.full ? " full-photo" : ""}`}
-          style={{ objectPosition: photo.position }}
-          src={`/${photo.base}-1280.webp`}
-          srcSet={`/${photo.base}-640.webp 640w, /${photo.base}-1280.webp 1280w`}
-          sizes="(max-width:700px) 90vw, 40vw"
-          alt={photo.alt}
-          loading="eager"
-          decoding="async"
-          width="1280"
-          height="1600"
-        />
-      </div>
-    </motion.div>
-  );
-}
-function StoryCaption({ photo, direction, paused }) {
-  const present = useIsPresent();
-  return (
-    <motion.div
-      className="gallery-caption"
-      aria-hidden={!present}
-      custom={direction}
-      variants={{
-        enter: (d) => ({
-          y: paused ? 0 : d * 36,
-          opacity: paused ? 1 : 0,
-          clipPath: "inset(0 0 100% 0)",
-        }),
-        settled: { y: 0, opacity: 1, clipPath: "inset(0 0 0% 0)" },
-        exit: (d) => ({
-          y: paused ? 0 : -d * 24,
-          opacity: 0,
-          clipPath: "inset(100% 0 0 0)",
-        }),
-      }}
-      initial="enter"
-      animate="settled"
-      exit="exit"
-      transition={{
-        duration: paused ? 0 : 0.55,
-        delay: paused ? 0 : 0.12,
-        ease,
-      }}
-    >
-      <h3>{photo.heading}</h3>
-      <p>{photo.description}</p>
-    </motion.div>
-  );
-}
 export default function AboutGallery({ paused }) {
-  const [view, setView] = useState({ index: 0, direction: 1 });
-  const current = useRef(0),
+  const root = useRef(null),
+    context = useRef(null),
+    activeTimeline = useRef(null),
+    current = useRef(0),
     busy = useRef(false),
-    queued = useRef(null),
+    pending = useRef(null),
     gesture = useRef(null),
-    gallery = useRef(null),
-    mounted = useRef(true);
+    request = useRef({ id: 0 });
+  const [selected, setSelected] = useState(0);
   useEffect(() => {
-    mounted.current = true;
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         for (const photo of photos) {
           const image = new Image();
+          image.srcset = `/${photo.base}-640.webp 640w, /${photo.base}-1280.webp 1280w`;
+          image.sizes = "(max-width:700px) 90vw, 40vw";
           image.src = `/${photo.base}-1280.webp`;
         }
         observer.disconnect();
       },
       { rootMargin: "150px" },
     );
-    observer.observe(gallery.current);
-    return () => {
-      mounted.current = false;
-      observer.disconnect();
-    };
+    observer.observe(root.current);
+    return () => observer.disconnect();
   }, []);
+  useLayoutEffect(() => {
+    const lifecycle = request.current;
+    context.current = gsap.context(() => {
+      const slides = root.current.querySelectorAll(".gallery-slide"),
+        captions = root.current.querySelectorAll(".gallery-caption");
+      const backs = root.current.querySelectorAll(".gallery-back-card");
+      gsap.set([...slides, ...captions, ...backs], { clearProps: "all" });
+      activeTimeline.current = gsap.timeline({
+        paused: true,
+        defaults: { ease: "power3.inOut" },
+      });
+      root.current.dataset.transitioning = "false";
+      gsap.set(
+        [...slides].filter((_, i) => i !== current.current),
+        { autoAlpha: 0 },
+      );
+      gsap.set(
+        [...captions].filter((_, i) => i !== current.current),
+        { autoAlpha: 0 },
+      );
+    }, root);
+    return () => {
+      lifecycle.id++;
+      busy.current = false;
+      pending.current = null;
+      activeTimeline.current?.kill();
+      context.current.revert();
+    };
+  }, [paused]);
+
   function choose(index, direction) {
     const next = (index + photos.length) % photos.length;
     if (busy.current) {
-      queued.current = { index: next, direction };
+      pending.current = { index: next, direction };
       return;
     }
     if (next === current.current) return;
     busy.current = true;
-    const previous = current.current;
-    current.current = next;
+    const ticket = ++request.current.id;
     const image = new Image();
+    image.srcset = `/${photos[next].base}-640.webp 640w, /${photos[next].base}-1280.webp 1280w`;
+    image.sizes = "(max-width:700px) 90vw, 40vw";
     image.src = `/${photos[next].base}-1280.webp`;
     image
       .decode()
       .catch(() => {})
       .then(() => {
-        if (mounted.current)
-          setView({
-            index: next,
-            direction: direction || (next > previous ? 1 : -1),
+        if (ticket !== request.current.id) return;
+        root.current.dataset.transitioning = "true";
+        const old = current.current,
+          d = direction || (next > old ? 1 : -1);
+        const slides = root.current.querySelectorAll(".gallery-slide"),
+          captions = root.current.querySelectorAll(".gallery-caption"),
+          backs = root.current.querySelectorAll(".gallery-back-card");
+        current.current = next;
+        setSelected(next);
+        const finish = () => {
+          root.current.dataset.transitioning = "false";
+          busy.current = false;
+          const queued = pending.current;
+          pending.current = null;
+          if (queued) choose(queued.index, queued.direction);
+        };
+        const timeline = activeTimeline.current;
+        timeline.pause().clear().time(0).eventCallback("onComplete", finish);
+        if (paused) {
+          gsap.set([slides[old], captions[old]], { autoAlpha: 0 });
+          gsap.set([slides[next], captions[next]], {
+            autoAlpha: 1,
+            xPercent: 0,
+            y: 0,
+            rotation: 0,
+            scale: 1,
+            clipPath: "inset(0% 0% 0% 0% round 12px)",
           });
+          finish();
+          return;
+        }
+        timeline
+          .set(slides[old], { zIndex: 2 })
+          .set(slides[next], {
+            autoAlpha: 1,
+            zIndex: 3,
+            xPercent: d * 80,
+            rotation: d * 9,
+            scale: 0.88,
+            clipPath: `inset(0% ${d < 0 ? 45 : 0}% 0% ${d > 0 ? 45 : 0}% round 12px)`,
+          })
+          .set(captions[next], {
+            autoAlpha: 1,
+            y: d * 28,
+            clipPath: "inset(0% 0% 100% 0%)",
+          })
+          .to(
+            slides[old],
+            {
+              xPercent: -d * 42,
+              rotation: -d * 10,
+              scale: 0.88,
+              autoAlpha: 0,
+              duration: 0.78,
+            },
+            0,
+          )
+          .to(
+            captions[old],
+            {
+              y: -d * 22,
+              clipPath: "inset(100% 0% 0% 0%)",
+              autoAlpha: 0,
+              duration: 0.28,
+              ease: "power2.in",
+            },
+            0,
+          )
+          .to(
+            slides[next],
+            {
+              xPercent: 0,
+              rotation: 0,
+              scale: 1,
+              clipPath: "inset(0% 0% 0% 0% round 12px)",
+              duration: 0.9,
+              ease: "power3.out",
+            },
+            0.08,
+          )
+          .to(
+            captions[next],
+            {
+              y: 0,
+              clipPath: "inset(0% 0% 0% 0%)",
+              duration: 0.58,
+              ease: "power3.out",
+            },
+            0.3,
+          )
+          .to(
+            backs,
+            { rotation: (i) => (i ? 9 : -9), scale: 0.92, duration: 0.35 },
+            0,
+          )
+          .to(
+            backs,
+            {
+              rotation: (i) => (i ? 5 : -5),
+              scale: 0.96,
+              duration: 0.6,
+              ease: "power3.out",
+            },
+            0.35,
+          );
+        timeline.play(0);
       });
   }
-  function settled() {
-    busy.current = false;
-    const pending = queued.current;
-    queued.current = null;
-    if (pending) choose(pending.index, pending.direction);
+  function keyboard(e) {
+    if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const d = e.key === "ArrowLeft" ? -1 : 1;
+    choose(e.key === "Home" ? 0 : e.key === "End" ? 2 : current.current + d, d);
   }
-  const photo = photos[view.index];
   return (
-    <div
-      ref={gallery}
-      className="about-photo about-gallery"
-      role="region"
-      aria-roledescription="carousel"
-      aria-label="A little more about me: photo gallery"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (["ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) {
-          e.preventDefault();
-          const d = e.key === "ArrowLeft" ? -1 : 1;
-          choose(
-            e.key === "Home" ? 0 : e.key === "End" ? 2 : current.current + d,
-            d,
-          );
-        }
-      }}
-    >
-      <span>A LITTLE MORE ME</span>
-      <figure
-        className="about-moment"
-        aria-label="Personal photographs"
-        onPointerDown={(e) => {
-          if (e.pointerType === "mouse") return;
-          gesture.current = { x: e.clientX, y: e.clientY };
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerCancel={() => {
-          gesture.current = null;
-        }}
-        onPointerUp={(e) => {
-          const start = gesture.current;
-          gesture.current = null;
-          if (!start) return;
-          const x = e.clientX - start.x,
-            y = e.clientY - start.y;
-          if (Math.abs(x) > 44 && Math.abs(x) > Math.abs(y) * 1.3) {
-            const d = x < 0 ? 1 : -1;
-            choose(current.current + d, d);
-          }
-        }}
+    <section id="about" className="about reveal" ref={root}>
+      <svg
+        className="chapter-watermark"
+        aria-hidden="true"
+        viewBox="0 0 260 240"
       >
-        {[-1, 1].map((offset) => (
-          <motion.div
-            key={`${view.index}-${offset}`}
-            className={`gallery-back-card ${offset < 0 ? "back-one" : "back-two"}`}
-            aria-hidden="true"
-            style={{
-              backgroundImage: `linear-gradient(#19271e66, #19271e66), url(/${photos[(view.index + offset + photos.length) % photos.length].base}-640.webp)`,
-            }}
-            initial={false}
-            animate={{
-              rotate: paused ? 0 : [offset * 2, offset * 9, offset * 5],
-              scale: paused ? 0.96 : [0.94, 0.91, 0.96],
-            }}
-            transition={{ duration: paused ? 0 : 1.05, ease }}
-          />
-        ))}
-        <AnimatePresence initial={false} custom={view.direction}>
-          <StoryPhoto
-            key={photo.base}
-            photo={photo}
-            direction={view.direction}
-            paused={paused}
-            settled={settled}
-          />
-        </AnimatePresence>
-      </figure>
-      <div
-        className="gallery-caption-stage"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <AnimatePresence initial={false} custom={view.direction}>
-          <StoryCaption
-            key={photo.base}
-            photo={photo}
-            direction={view.direction}
-            paused={paused}
-          />
-        </AnimatePresence>
+        <text x="0" y="210">
+          01
+        </text>
+      </svg>
+      <div className="about-heading">
+        <p className="kicker">
+          <b>01 /</b> About me
+        </p>
+        <Heading>
+          A little technical.
+          <br />A little people person.
+          <br />
+          <em>A lot of curiosity.</em>
+        </Heading>
       </div>
-      <div className="gallery-controls">
-        <button
-          type="button"
-          className="gallery-arrow"
-          aria-label="Previous About photo"
-          onClick={() => choose(current.current - 1, -1)}
-        >
-          ←
-        </button>
+      <div className="about-copy">
+        <p>
+          I’m Tiesha, a Computer Engineering student specializing in
+          Cybersecurity, IoT, and Blockchain. I’m curious about technology,
+          products, and how people use them.
+        </p>
+        <p>
+          I enjoy testing ideas, spotting what could work better, and bringing
+          teams together. I’m still exploring where I’d like to go deeper—and
+          learning as I go.
+        </p>
+        <div className="tags">
+          <span className="tag">Technology</span>
+          <span className="tag">Products & testing</span>
+          <span className="tag">People & teams</span>
+        </div>
         <div
-          className="gallery-thumbnails"
-          role="group"
-          aria-label="Choose an About photo"
+          className="gallery-caption-stage"
+          aria-live="polite"
+          aria-atomic="true"
         >
-          {photos.map((p, i) => (
-            <button
-              key={p.base}
-              type="button"
-              aria-label={p.label}
-              aria-pressed={view.index === i}
-              onClick={() => choose(i)}
+          {photos.map((photo, i) => (
+            <div
+              className="gallery-caption"
+              data-active={selected === i}
+              aria-hidden={selected !== i}
+              key={photo.base}
             >
-              <img src={`/${p.base}-640.webp`} alt="" loading="lazy" />
-              <span className="gallery-dot" />
-            </button>
+              <span className="story-number" aria-hidden="true">
+                0{i + 1} / 03
+              </span>
+              <h3>{photo.heading}</h3>
+              <p>{photo.description}</p>
+            </div>
           ))}
         </div>
-        <button
-          type="button"
-          className="gallery-arrow"
-          aria-label="Next About photo"
-          onClick={() => choose(current.current + 1, 1)}
-        >
-          →
-        </button>
       </div>
-      <p className="gallery-counter">
-        {String(view.index + 1).padStart(2, "0")} / 03
-      </p>
-    </div>
+      <div
+        className="about-photo about-gallery"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="A little more about me: photo gallery"
+        tabIndex={0}
+        onKeyDown={keyboard}
+      >
+        <span>A LITTLE MORE ME</span>
+        <figure
+          className="about-moment"
+          aria-label="Personal photographs"
+          onPointerDown={(e) => {
+            if (e.pointerType === "mouse") return;
+            gesture.current = { x: e.clientX, y: e.clientY };
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }}
+          onPointerCancel={() => {
+            gesture.current = null;
+          }}
+          onPointerUp={(e) => {
+            const start = gesture.current;
+            gesture.current = null;
+            if (!start) return;
+            const dx = e.clientX - start.x,
+              dy = e.clientY - start.y;
+            if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+              const d = dx < 0 ? 1 : -1;
+              choose(current.current + d, d);
+            }
+          }}
+        >
+          {[-1, 1].map((offset, i) => (
+            <div
+              key={offset}
+              className={`gallery-back-card ${i ? "back-two" : "back-one"}`}
+              aria-hidden="true"
+              style={{
+                backgroundImage: `linear-gradient(#19271e66,#19271e66),url(/${photos[(selected + offset + 3) % 3].base}-640.webp)`,
+              }}
+            />
+          ))}
+          {photos.map((photo, i) => (
+            <div
+              key={photo.base}
+              className="gallery-slide"
+              data-active={selected === i}
+              aria-hidden={selected !== i}
+            >
+              {photo.full && (
+                <div
+                  className="gallery-atmosphere"
+                  style={{ backgroundImage: `url(/${photo.base}-640.webp)` }}
+                />
+              )}
+              <div className="gallery-photo-surface">
+                <img
+                  className={`gallery-image${photo.full ? " full-photo" : ""}`}
+                  style={{ objectPosition: photo.position }}
+                  src={`/${photo.base}-1280.webp`}
+                  srcSet={`/${photo.base}-640.webp 640w, /${photo.base}-1280.webp 1280w`}
+                  sizes="(max-width:700px) 90vw, 40vw"
+                  alt={photo.alt}
+                  loading="lazy"
+                  decoding="async"
+                  width="1280"
+                  height="1600"
+                />
+              </div>
+            </div>
+          ))}
+        </figure>
+        <div className="gallery-controls">
+          <button
+            type="button"
+            className="gallery-arrow"
+            aria-label="Previous About photo"
+            onClick={() => choose(current.current - 1, -1)}
+          >
+            ←
+          </button>
+          <p className="gallery-counter" aria-live="off">
+            {String(selected + 1).padStart(2, "0")} / 03
+          </p>
+          <button
+            type="button"
+            className="gallery-arrow"
+            aria-label="Next About photo"
+            onClick={() => choose(current.current + 1, 1)}
+          >
+            →
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
