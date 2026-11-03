@@ -35,7 +35,10 @@ test("content, assets, layout and interactions", async ({ page }, testInfo) => {
   const normalize = (text) => text.replace(/\s+/g, "");
   // The GDG placeholder is deliberately replaced by the user's group photograph.
   for (const fragment of baseline.fragments.filter(
-    (text) => text !== "A space for a community moment.",
+    (text) =>
+      !["A space for a community moment.", "A moment worth sharing."].includes(
+        text,
+      ),
   ))
     expect(normalize(preservedText)).toContain(normalize(fragment));
   for (const id of [
@@ -360,12 +363,12 @@ test("new About gallery and leadership photographs", async ({
   await gallery.getByRole("button", { name: "Next About photo" }).click();
   await expect(
     gallery.getByRole("img", {
-      name: "Tiesha in a white shirt on a tree-lined campus",
+      name: "Tiesha sitting in front of the TEDx letters",
     }),
   ).toBeVisible();
   await expect(gallery.locator(".gallery-counter")).toHaveText("02 / 03");
   await gallery
-    .getByRole("button", { name: "Campus moment", exact: true })
+    .getByRole("button", { name: "TEDx moment", exact: true })
     .press("ArrowLeft");
   await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
   await expect
@@ -413,13 +416,120 @@ test("new About gallery and leadership photographs", async ({
   await expect(gdg).toHaveAttribute("aria-expanded", "false");
   await page.getByRole("button", { name: "Motion off ▷" }).click();
   await gallery
-    .getByRole("button", { name: "Campus moment", exact: true })
+    .getByRole("button", { name: "TEDx moment", exact: true })
     .click();
   await expect(
     gallery.getByRole("img", {
-      name: "Tiesha in a white shirt on a tree-lined campus",
+      name: "Tiesha sitting in front of the TEDx letters",
     }),
   ).toBeVisible();
   await page.waitForTimeout(700);
   await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+});
+
+test("About story choreography, rapid navigation and stable captions", async ({
+  page,
+}, testInfo) => {
+  await page.goto("/");
+  const gallery = page.locator(".about-gallery");
+  await gallery.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1100);
+  const frame = gallery.locator(".about-moment");
+  const initialHeight = (await gallery.boundingBox()).height;
+  const headings = [
+    "A little more than a title.",
+    "Beyond the classroom.",
+    "Learning to take the mic.",
+  ];
+  for (const index of [1, 2, 0, 2, 1, 0]) {
+    await gallery
+      .getByRole("button", {
+        name: ["Campus portrait", "TEDx moment", "Podium speech"][index],
+        exact: true,
+      })
+      .click();
+    await expect(gallery.locator(".gallery-counter")).toHaveText(
+      `0${index + 1} / 03`,
+    );
+    await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+    await expect(gallery.locator(".gallery-caption")).toHaveCount(1);
+    await expect(
+      gallery.getByRole("heading", { name: headings[index], exact: true }),
+    ).toBeVisible();
+    expect(
+      Math.abs((await gallery.boundingBox()).height - initialHeight),
+    ).toBeLessThan(2);
+  }
+  await gallery
+    .getByRole("button", { name: "Next About photo" })
+    .click({ clickCount: 6, delay: 30 });
+  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  await expect(gallery.locator(".gallery-caption")).toHaveCount(1);
+  await gallery.focus();
+  await gallery.press("End");
+  await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
+  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  await gallery.press("ArrowRight");
+  await expect(gallery.locator(".gallery-counter")).toHaveText("01 / 03");
+  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  const caption = await gallery.locator(".gallery-caption-stage").boundingBox(),
+    box = await frame.boundingBox();
+  expect(caption.y).toBeGreaterThan(box.y + box.height);
+  await gallery.screenshot({
+    path: `test-results/${testInfo.project.name}-story.png`,
+  });
+});
+
+test("About touch swipes and natural vertical scrolling", async ({
+  browser,
+}, testInfo) => {
+  test.skip(
+    !testInfo.project.name.includes("mobile"),
+    "Touch behavior uses mobile viewports",
+  );
+  const context = await browser.newContext({
+    viewport: testInfo.project.use.viewport,
+    hasTouch: true,
+    isMobile: true,
+  });
+  const page = await context.newPage();
+  await page.goto("http://127.0.0.1:5175/");
+  const gallery = page.locator(".about-gallery"),
+    frame = gallery.locator(".about-moment");
+  await frame.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1200);
+  const cdp = await context.newCDPSession(page);
+  async function swipe(dx, dy) {
+    const r = await frame.boundingBox(),
+      x = r.x + r.width * (dx < 0 ? 0.8 : 0.2),
+      y = r.y + r.height * 0.55;
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y }],
+    });
+    for (let i = 1; i <= 8; i++)
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: x + (dx * i) / 8, y: y + (dy * i) / 8 }],
+      });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+  }
+  for (const count of [2, 3, 1]) {
+    await swipe(-140, 5);
+    await expect(gallery.locator(".gallery-counter")).toHaveText(
+      `0${count} / 03`,
+    );
+    await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  }
+  await swipe(140, 5);
+  await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
+  await expect(gallery.locator(".gallery-slide")).toHaveCount(1);
+  const before = await page.evaluate(() => scrollY);
+  await swipe(0, -130);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before);
+  await expect(gallery.locator(".gallery-counter")).toHaveText("03 / 03");
+  await context.close();
 });
